@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Diabetes Guardian</title>
+  <meta name="theme-color" content="#0b1220" />
+  <style>
+    body{font-family:system-ui,Arial; background:#0b1220; color:#e6edf3; margin:0; padding:16px;}
+    h1{margin:6px 0 2px}
+    .sub{opacity:.8; font-size:12px; margin-bottom:12px}
+    .card{background:#111a2e; border:1px solid #223; border-radius:14px; padding:12px; margin:10px 0;}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row > *{flex:1}
+    label{font-size:12px; opacity:.85}
+    input,select,textarea{width:100%; padding:10px; border-radius:12px; border:1px solid #334; background:#0f1730; color:#fff; margin-top:6px}
+    button{padding:10px 12px; border-radius:12px; border:1px solid #334; background:#1a2a4a; color:#fff; margin:6px 6px 0 0}
+    .ok{border-color:#2f6}
+    .warn{border-color:#fa4}
+    .danger{border-color:#f44}
+    .small{opacity:.8; font-size:12px; line-height:1.4}
+    .en{direction:ltr; text-align:left; opacity:.85; font-size:12px; margin-top:6px}
+  </style>
+</head>
+<body>
+  <h1>🛡️ Diabetes Guardian</h1>
+  <div class="sub">العربي أساسي + English backup • تنبيه وأمان • (بدون جرعات أنسولين)</div>
+
+  <div class="card" id="statusCard">
+    <b>الحالة</b>
+    <div id="statusAr" class="small">جاهز.</div>
+    <div id="statusEn" class="en">Ready.</div>
+  </div>
+
+  <div class="card">
+    <b>إدخال سريع</b>
+
+    <div class="row">
+      <div>
+        <label>سكر الآن (mg/dL)</label>
+        <input id="glucose" type="number" placeholder="مثال: 92" />
+      </div>
+      <div>
+        <label>الاتجاه</label>
+        <select id="trend">
+          <option value="steady">ثابت</option>
+          <option value="falling">نازل</option>
+          <option value="fast_falling">نازل بسرعة</option>
+          <option value="rising">طالع</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <button onclick="setMode('normal')">🏠 وضع عادي</button>
+      <button onclick="setMode('work')">🧑‍💼 وضع شغل</button>
+      <button onclick="toggleFlag('coffee')">☕ قهوة</button>
+      <button onclick="toggleFlag('smoking')">🚬 تدخين</button>
+    </div>
+
+    <div class="row">
+      <button onclick="logEvent('meal')">🍽️ سجل وجبة</button>
+      <button onclick="logEvent('bolus')">💉 سجل نوفورابيد</button>
+      <button onclick="runSafetyCheck()">🔎 فحص أمان</button>
+      <button onclick="panic()">🚨 طوارئ</button>
+    </div>
+
+    <div id="ctx" class="small" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <b>ملاحظة مهمة</b>
+    <div class="small">
+      هذا النظام هدفه <b>التنبيه والأمان</b> وتسجيل الأحداث. لا يعطي جرعات أنسولين.
+      إذا في هبوط شديد/تشنج/عدم استجابة: اطلب مساعدة فورًا واتبع خطة الطوارئ/الغلوكاغون حسب تعليمات طبيبك.
+    </div>
+    <div class="en">
+      Safety tool only. No insulin dosing. For severe hypo/unresponsiveness: seek help immediately and follow your emergency plan/glucagon instructions.
+    </div>
+  </div>
+
+<script>
+  // ---- State ----
+  const state = {
+    mode: "normal",
+    coffee: false,
+    smoking: false,
+    lastMealISO: null,
+    lastBolusISO: null
+  };
+
+  // ---- Helpers ----
+  const $ = (id)=>document.getElementById(id);
+  const nowISO = ()=> new Date().toISOString();
+  const minsSince = (iso)=> iso ? Math.floor((Date.now()-new Date(iso).getTime())/60000) : null;
+
+  function renderCtx(){
+    const meal = minsSince(state.lastMealISO);
+    const bolus = minsSince(state.lastBolusISO);
+    $("ctx").innerText =
+      `mode=${state.mode} | coffee=${state.coffee} | smoking=${state.smoking} | ` +
+      `last_meal=${meal===null?"—":meal+"m"} | last_bolus=${bolus===null?"—":bolus+"m"}`;
+  }
+
+  function setStatus(ar, en, level="ok", speakIt=false){
+    const card = $("statusCard");
+    card.className = "card " + level;
+    $("statusAr").innerText = ar;
+    $("statusEn").innerText = en;
+
+    if(speakIt){
+      speak(ar); // العربي هو الأساسي للصوت
+    }
+  }
+
+  function speak(text){
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ar";
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---- Actions ----
+  function setMode(mode){
+    state.mode = mode;
+    renderCtx();
+    setStatus(
+      mode==="work" ? "تم تفعيل وضع الشغل." : "تم تفعيل الوضع العادي.",
+      mode==="work" ? "Work mode enabled." : "Normal mode enabled.",
+      "ok",
+      true
+    );
+  }
+
+  function toggleFlag(which){
+    if(which==="coffee") state.coffee = !state.coffee;
+    if(which==="smoking") state.smoking = !state.smoking;
+    renderCtx();
+    setStatus(
+      "تم تحديث الحالة.",
+      "Status updated.",
+      "ok",
+      false
+    );
+  }
+
+  function logEvent(type){
+    if(type==="meal") state.lastMealISO = nowISO();
+    if(type==="bolus") state.lastBolusISO = nowISO();
+    renderCtx();
+    setStatus(
+      type==="meal" ? "تم تسجيل وجبة." : "تم تسجيل نوفورابيد.",
+      type==="meal" ? "Meal logged." : "Bolus logged.",
+      "ok",
+      false
+    );
+  }
+
+  // ---- Safety rules (simple, for Phase A) ----
+  // You can change thresholds later from guardian_rules.json when we wire it in the next step.
+  const TH = {
+    hypoUrgent: 55,
+    hypoRisk: 70
+  };
+
+  function runSafetyCheck(){
+    const g = Number($("glucose").value || 0);
+    const trend = $("trend").value;
+
+    if(!g || g<=0){
+      setStatus("اكتب قيمة السكر أولًا.", "Enter glucose value first.", "warn", true);
+      return;
+    }
+
+    // حساسية إضافية لو شغل/قهوة/تدخين
+    const sensitive = (state.mode==="work" || state.coffee || state.smoking);
+
+    // خطر شديد
+    if(g <= TH.hypoUrgent){
+      setStatus(
+        "🚨 هبوط خطير. خذ كارب سريع فورًا واطلب مساعدة إذا أنت وحدك.",
+        "🚨 Severe low. Take fast carbs now and get help if alone.",
+        "danger",
+        true
+      );
+      return;
+    }
+
+    // هبوط + نازل
+    const falling = (trend==="falling" || trend==="fast_falling");
+    if(g <= TH.hypoRisk && falling){
+      setStatus(
+        sensitive
+          ? "⚠️ هبوط ونزول. بما أنك بحركة/قهوة/تدخين: خذ كارب سريع الآن."
+          : "⚠️ هبوط ونزول. خذ كارب سريع وراقب.",
+        "⚠️ Low + falling. Take fast carbs and monitor.",
+        "warn",
+        true
+      );
+      return;
+    }
+
+    // قفل النوم: وجبة أو نوفورابيد قريب
+    const mMeal = minsSince(state.lastMealISO);
+    const mBolus = minsSince(state.lastBolusISO);
+    const mealLock = (mMeal!==null && mMeal<=120);
+    const bolusLock = (mBolus!==null && mBolus<=180);
+
+    if(mealLock || bolusLock){
+      setStatus(
+        "🛑 قبل النوم: في وجبة/نوفورابيد قريب. لا تنام بدون متابعة.",
+        "🛑 Pre-sleep caution: recent meal/bolus. Monitor before sleep.",
+        "warn",
+        true
+      );
+      return;
+    }
+
+    setStatus(
+      "✅ الوضع آمن حاليًا حسب المدخلات.",
+      "✅ Looks safe for now based on inputs.",
+      "ok",
+      false
+    );
+  }
+
+  function panic(){
+    setStatus(
+      "🚨 طوارئ! اطلب المساعدة فورًا.",
+      "🚨 Emergency! Get help now.",
+      "danger",
+      true
+    );
+    // نكرر الصوت كتنبيه أقوى
+    setTimeout(()=>speak("طوارئ. اطلب المساعدة فورًا."), 900);
+    setTimeout(()=>speak("طوارئ. اطلب المساعدة فورًا."), 1800);
+  }
+
+  // Boot
+  renderCtx();
+  setStatus("جاهز. أدخل السكر واضغط فحص أمان.", "Ready. Enter glucose then run Safety Check.", "ok", false);
+</script>
+</body>
+</html>
