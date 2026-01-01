@@ -1,0 +1,99 @@
+‏{
+‏  "patient": {
+‏    "name": "Hamza",
+‏    "country": "Jordan",
+‏    "primary_language": "ar",
+‏    "fallback_language": "en",
+‏    "diabetes": {
+‏      "type": "T1D",
+‏      "diagnosed_age_years": 10,
+‏      "current_age_years": 27
+‏    },
+‏    "body": {
+‏      "height_cm": 183,
+‏      "weight_kg": 84,
+‏      "weight_note": "provisional_last_known_update"
+‏    },
+‏    "sleep": {
+‏      "bedtime_usually": "01:00-03:00",
+‏      "wake_time_usually": "06:45-07:10",
+‏      "sleep_disruption_symptoms_now": "rare_or_none",
+‏      "phone_nearby_charging": true,
+‏      "internet_usually_on": true
+‏    },
+‏    "activity": {
+‏      "pattern": "variable",
+‏      "most_days": "moderate",
+‏      "some_days": "high",
+‏      "few_days": "light",
+‏      "lows_more_likely": "during_work",
+‏      "manual_override_supported": true
+‏    },
+‏    "insulin": {
+‏      "basal": {
+‏        "name": "Lantus",
+‏        "status": "stopped_recently",
+‏        "note": "needs stable fixed time when restarted"
+‏      },
+‏      "bolus": {
+‏        "name": "NovoRapid",
+‏        "timing_pattern": "often_taken_late_close_to_sleep",
+‏        "correction_pattern": "sometimes_estimated_without_fixed_rule"
+‏      },
+‏      "delivery_method": "syringe"
+‏    },
+‏    "hypoglycemia": {
+‏      "symptoms_start_mgdl": 60,
+‏      "symptoms_range_mgdl": "60-50",
+‏      "severe_events_last_8_months": 12,
+‏      "severe_events_context": "mostly_during_sleep",
+‏      "ems_history": true,
+‏      "notes": "history includes episodes with stiffness/clenched jaw; high risk nocturnal severe hypoglycemia"
+‏    },
+‏    "lifestyle_factors": {
+‏      "coffee": {
+‏        "frequency": "high",
+‏        "pattern": "morning + mid-shift + additional cups through day"
+‏      },
+‏      "smoking": {
+‏        "packs_per_day": "2-3",
+‏        "note": "may mask hypo symptoms and affect sleep/variability"
+‏      },
+‏      "stress": {
+‏        "level": "high",
+‏        "note": "mental stress frequently affects routine and glucose stability"
+‏      }
+‏    },
+‏    "household": {
+‏      "lives_with_family": true,
+‏      "rooms": "parents and sister nearby; brother shares room",
+‏      "family_sleep": {
+‏        "mother_father": "light_sleep",
+‏        "brother": "heavy_sleep_but_responds_to_seizure_like_signs"
+‏      }
+‏    },
+‏    "emergency_contacts": [
+‏      {
+‏        "id": "mother",
+‏        "name": null,
+‏        "phone": null,
+‏        "contact_method_preference": "push_then_call",
+‏        "note": "leave phone empty for now"
+‏      },
+‏      {
+‏        "id": "father",
+‏        "name": null,
+‏        "phone": null,
+‏        "contact_method_preference": "push_then_call",
+‏        "note": "leave phone empty for now"
+‏      },
+‏      {
+‏        "id": "brother",
+‏        "name": null,
+‏        "phone": null,
+‏        "contact_method_preference": "push_then_call_louder_longer",
+‏        "note": "leave phone empty for now"
+‏      }
+‏    ]
+‏  }
+‏}
